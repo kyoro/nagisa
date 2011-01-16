@@ -1,0 +1,7 @@
+---
+cache_server:
+- localhost:11211
+header_charset: utf8
+header_type: text/html
+session_expire: +5m
+template_prefix: /tmpl/
