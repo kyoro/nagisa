@@ -6,3 +6,4 @@ header_type: text/html
 session_expire: +5m
 template_prefix: /tmpl/
 language: jp
+value_file: /value/values.yaml

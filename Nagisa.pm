@@ -20,6 +20,7 @@ sub load {
     if($@){
         $self->{_settings} = {
             template_prefix => '/tmpl/',
+            value_file      => '/value/values.yaml',
             cache_server    => [
                 'localhost:11211',
             ],
@@ -35,6 +36,10 @@ sub load {
 sub TEMPLATE_PREFIX { 
     my $self = shift;
     return $ENV{NAGISA_PROJECT_ROOT}.$self->_settings->{template_prefix};
+}
+sub VALUE_FILE { 
+    my $self = shift;
+    return $ENV{NAGISA_PROJECT_ROOT}.$self->_settings->{value_file};
 }
 sub CACHE_SERVER    {  
     my $self = shift;
@@ -88,6 +93,7 @@ __PACKAGE__->mk_accessors(qw/
     mode
     assign 
     language
+    value
     settings
 /);
 
@@ -158,6 +164,12 @@ sub display {
 sub new {
     my ($class, $args) = @_;
     my $settings = Nagisa::Settings->load;
+    my $value = {};
+    if(-e $settings->VALUE_FILE){
+        eval{
+            $value = YAML::XS::LoadFile($settings->VALUE_FILE);
+        };
+    }
     my $self;
     $self = $class->SUPER::new({
             config   => {
@@ -190,6 +202,7 @@ sub new {
             mode                => undef,
             assign              => {},
             language            => $settings->LANGUAGE,
+            value               => $value,
             settings            => $settings,
             });
     if($self->config->{use_cache}){
@@ -218,6 +231,13 @@ sub lang {
         $self->session->param( language_set => $language_name );
     }
     return 1;
+}
+
+sub v {
+    my ($self,$key) = @_;
+    my $v = $self->value->{$key};
+    return unless $v;
+    return $v->{$self->language};
 }
 
 sub param {
