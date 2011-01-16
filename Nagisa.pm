@@ -141,12 +141,12 @@ sub display {
     foreach my $function_ref (@{$assign_functions}){
         $nagisa->$function_ref;
     }
-    if($self->config->{use_multi_lang}){
-        if($self->language ne $self->settings->LANGUAGE){
+    if($nagisa->config->{use_multi_lang}){
+        if($nagisa->language ne $nagisa->settings->LANGUAGE){
             $nagisa->template->{file_prefix} = sprintf(
                     "%s%s/",
                     $nagisa->template->file_prefix,
-                    $self->language,
+                    $nagisa->language,
                     );
         }
     }
