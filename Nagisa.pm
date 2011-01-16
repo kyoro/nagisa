@@ -26,6 +26,7 @@ sub load {
             header_charset  => 'utf8',
             header_type     => 'text/html',
             session_expire  => '+5m',
+            language        => 'jp',
         }
     }
     return $self;
@@ -51,6 +52,11 @@ sub SESSION_EXPIRE  {
     my $self = shift;
     return $self->_settings->{session_expire};
 }
+sub LANGUAGE  { 
+    my $self = shift;
+    return $self->_settings->{language};
+}
+
 
 ###
 ### Nagisa
@@ -81,6 +87,7 @@ __PACKAGE__->mk_accessors(qw/
     validation_error
     mode
     assign 
+    language
     settings
 /);
 
@@ -98,6 +105,11 @@ sub use_session {
 sub use_url_session_id {
     my ($class,$flag) = @_;
     $nagisa_class_property{use_url_session_id} = $flag || 0;
+}
+
+sub use_multi_lang {
+    my ($class,$flag) = @_;
+    $nagisa_class_property{use_multi_lang} = $flag || 0;
 }
 
 sub use_mode_param {
@@ -129,6 +141,15 @@ sub display {
     foreach my $function_ref (@{$assign_functions}){
         $nagisa->$function_ref;
     }
+    if($self->config->{use_multi_lang}){
+        if($self->language ne $self->settings->LANGUAGE){
+            $nagisa->template->{file_prefix} = sprintf(
+                    "%s%s/",
+                    $nagisa->template->file_prefix,
+                    $self->language,
+                    );
+        }
+    }
     $nagisa->header();
     $nagisa->template->output();
     return 1;
@@ -146,6 +167,8 @@ sub new {
                     $nagisa_class_property{use_session} || 0,
                 use_url_session_id  => 
                     $nagisa_class_property{use_url_session_id} || 0,
+                use_multi_lang      => 
+                    $nagisa_class_property{use_multi_lang} || 0,
                 mode_param          => 
                     $nagisa_class_property{mode_param} || undef,
             },
@@ -166,6 +189,7 @@ sub new {
             validation_error    => [],
             mode                => undef,
             assign              => {},
+            language            => $settings->LANGUAGE,
             settings            => $settings,
             });
     if($self->config->{use_cache}){
@@ -174,7 +198,26 @@ sub new {
     if($self->config->{use_session}){
         $self->init_session;
     }
+    if($self->config->{use_multi_lang}){
+        my $lang = $self->language;
+        if($self->config->{use_session}){
+            $lang = $self->session->param('language_set') 
+                    || $self->language; 
+        }
+        $self->language($lang);
+    }
+ 
     return $self;
+}
+
+sub lang {
+    my ($self,$language_name) = @_;
+    return unless $self->config->{use_multi_lang};
+    $self->language($language_name);
+    if($self->config->{use_session}){
+        $self->session->param( language_set => $language_name );
+    }
+    return 1;
 }
 
 sub param {
