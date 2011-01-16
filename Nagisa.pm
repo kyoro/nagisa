@@ -70,6 +70,7 @@ package Nagisa;
 use strict;
 use warnings;
 use base 'Class::Accessor::Fast';
+use utf8;
 use CGI;
 use URI;
 use File::Copy;
@@ -237,7 +238,9 @@ sub v {
     my ($self,$key) = @_;
     my $v = $self->value->{$key};
     return unless $v;
-    return $v->{$self->language};
+    my $res = $v->{$self->language};
+    utf8::encode($res);
+    return $res;
 }
 
 sub param {
